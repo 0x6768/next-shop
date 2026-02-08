@@ -1,60 +1,40 @@
 // pages/shop.js
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { 
   Card, 
   Row, 
   Col, 
   Input, 
   Button, 
-  Tag, 
   Typography,
   Spin,
-  Empty
+  Layout
 } from 'antd'
-import { Icon } from '@iconify/react'
 import { useRouter } from 'next/router'
 
+const { Header, Content } = Layout
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
 
-// 分类
-const categories = [
-  { key: 'all', label: '全部' },
-  { key: 'video', label: '视频' },
-  { key: 'music', label: '音乐' },
-  { key: 'game', label: '游戏' },
-  { key: 'service', label: '服务' },
-  { key: 'education', label: '学习' }
-]
-
 export default function ShopPage() {
   const router = useRouter()
-  const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchText, setSearchText] = useState('')
-  const [products, setProducts] = useState([])
+  const [allProducts, setAllProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // 获取商品数据
+  // 获取所有商品数据
   useEffect(() => {
-    fetchProducts()
-  }, [selectedCategory, searchText])
+    fetchAllProducts()
+  }, [])
 
-  const fetchProducts = async () => {
+  const fetchAllProducts = async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (selectedCategory !== 'all') {
-        params.append('category', selectedCategory)
-      }
-      if (searchText) {
-        params.append('search', searchText)
-      }
-      
-      const response = await fetch(`/api/products/list?${params.toString()}`)
+      const response = await fetch('/api/products/list')
       if (!response.ok) throw new Error('获取商品失败')
       const data = await response.json()
-      setProducts(data)
+      setAllProducts(data)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -62,192 +42,276 @@ export default function ShopPage() {
     }
   }
 
+  // 本地搜索筛选
+  const filteredProducts = useMemo(() => {
+    if (!searchText.trim()) return allProducts
+    
+    const searchLower = searchText.toLowerCase().trim()
+    return allProducts.filter(product => 
+      product.name?.toLowerCase().includes(searchLower) ||
+      product.description?.toLowerCase().includes(searchLower) ||
+      product.tags?.some(tag => tag.toLowerCase().includes(searchLower))
+    )
+  }, [allProducts, searchText])
+
   // 跳转到详情页
   const goToDetail = (productId) => {
     router.push(`/product/${productId}`)
   }
 
-  // 防抖搜索
-  const handleSearch = (value) => {
-    setSearchText(value)
-  }
-
   return (
-    <div style={{ 
+    <Layout style={{ 
       minHeight: '100vh', 
-      background: '#fafafa',
-      padding: 24
+      background: '#fff',
     }}>
-      {/* 头部 */}
-      <div style={{ 
-        textAlign: 'center', 
-        padding: '40px 0 20px 0',
-        maxWidth: 1200,
-        margin: '0 auto'
+      {/* 导航栏 */}
+      <Header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 40px',
+        background: '#fff',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        zIndex: 1,
       }}>
-        <Title level={2} style={{ marginBottom: 8 }}>
-          积分商城
-        </Title>
-        <Paragraph type="secondary">
-          选择商品，输入积分码兑换
-        </Paragraph>
-      </div>
-
-      {/* 搜索筛选 */}
-      <div style={{ 
-        maxWidth: 1200, 
-        margin: '0 auto 24px auto'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          gap: 8, 
-          flexWrap: 'wrap',
-          marginBottom: 16
-        }}>
-          {categories.map(category => (
-            <Button
-              key={category.key}
-              type={selectedCategory === category.key ? 'primary' : 'default'}
-              onClick={() => setSelectedCategory(category.key)}
-              style={{ 
-                borderRadius: 20,
-                padding: '4px 16px'
-              }}
-            >
-              {category.label}
-            </Button>
-          ))}
+        <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
+          <Text strong onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+            Szyang's Shop
+          </Text>
         </div>
+        <Button
+          type="text"
+          style={{ color: '#333' }}
+          onClick={() => router.push('/')}
+        >
+          返回首页
+        </Button>
+      </Header>
+
+      <Content style={{ padding: '40px 0' }}>
+        {/* 头部标题区域 */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto 40px auto',
+          padding: '0 40px',
+          textAlign: 'left'
+        }}>
         
-        <Search
-          placeholder="搜索商品..."
-          allowClear
-          size="large"
-          onSearch={handleSearch}
-          onChange={(e) => setSearchText(e.target.value)}
-          prefix={<Icon icon="mdi:magnify" style={{ fontSize: 16 }} />}
-          loading={loading}
-        />
-      </div>
+          
+        
 
-      {/* 商品列表 */}
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 80 }}>
-            <Spin size="large" />
-            <Paragraph style={{ marginTop: 16 }}>加载中...</Paragraph>
-          </div>
-        ) : error ? (
-          <div style={{ textAlign: 'center', padding: 80 }}>
-            <Icon 
-              icon="mdi:alert-circle" 
-              style={{ fontSize: 48, color: '#ff4d4f', marginBottom: 16 }} 
+          {/* 搜索框 */}
+          <div style={{ maxWidth: 600 }}>
+            <Search
+              placeholder="搜索商品名称或描述..."
+              allowClear
+              size="large"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ 
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+              }}
             />
-            <Title level={4} style={{ color: '#ff4d4f' }}>
-              加载失败
-            </Title>
-            <Paragraph type="secondary">{error}</Paragraph>
-            <Button 
-              onClick={fetchProducts}
-              style={{ marginTop: 16 }}
-            >
-              重试
-            </Button>
+            {searchText && (
+              <Text type="secondary" style={{ 
+                display: 'block', 
+                marginTop: '8px',
+                fontSize: '0.875rem'
+              }}>
+                找到 {filteredProducts.length} 个商品
+              </Text>
+            )}
           </div>
-        ) : products.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '60px 0',
-            background: '#fff',
-            borderRadius: 8,
-            marginTop: 24
-          }}>
-            <Icon 
-              icon="mdi:package-variant" 
-              style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} 
-            />
-            <Title level={4} style={{ color: '#bfbfbf' }}>
-              没有找到商品
-            </Title>
-            <Paragraph type="secondary">
-              换个搜索词试试
-            </Paragraph>
-          </div>
-        ) : (
-          <Row gutter={[24, 24]}>
-            {products.map(product => (
-              <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                <Card
-                  hoverable
-                  onClick={() => goToDetail(product.id)}
-                  style={{ 
-                    height: '100%',
-                    borderRadius: 8,
-                    cursor: 'pointer'
-                  }}
-                  bodyStyle={{ padding: 20, height: '100%' }}
-                >
-                  {/* 商品图标 */}
-                  <div style={{ 
-                    width: 48,
-                    height: 48,
-                    borderRadius: 8,
-                    background: product.color + '15',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 16,
-                    color: product.color,
-                    fontSize: 20
-                  }}>
-                    <Icon icon={product.icon} width={24} height={24} />
-                  </div>
+        </div>
 
-                  {/* 商品名称 */}
-                  <Title level={4} style={{ marginBottom: 8 }}>
-                    {product.name}
-                  </Title>
-
-                  {/* 商品描述 */}
-                  <Paragraph type="secondary" style={{ 
-                    fontSize: 13, 
-                    marginBottom: 12,
-                    minHeight: 40
-                  }}>
-                    {product.description}
-                  </Paragraph>
-
-                  {/* 标签和价格 */}
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: 'auto'
-                  }}>
-                    <Tag color={product.color}>
-                      {product.type === 'virtual' ? '虚拟商品' : 
-                      product.type === 'service' ? '服务' : '课程'}
-                    </Tag>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        fontSize: 20, 
-                        fontWeight: 600,
-                        color: '#ff4d4f',
-                        lineHeight: 1
+        {/* 商品列表区域 */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 40px'
+        }}>
+          {loading ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '100px 0',
+              background: '#fff',
+              borderRadius: '12px'
+            }}>
+              <Spin size="large" />
+              <Text style={{ 
+                display: 'block', 
+                marginTop: '16px',
+                color: '#666',
+                fontSize: '1rem'
+              }}>
+                加载商品中...
+              </Text>
+            </div>
+          ) : error ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '100px 0',
+              background: '#fff',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+            }}>
+              <Title level={4} style={{ 
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                加载失败
+              </Title>
+              <Paragraph type="secondary" style={{ marginBottom: '24px' }}>
+                {error}
+              </Paragraph>
+              <Button 
+                type="primary"
+                shape="round"
+                onClick={fetchAllProducts}
+                style={{
+                  background: '#ffc107',
+                  color: '#333',
+                  border: 'none',
+                  fontWeight: 500,
+                  boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)'
+                }}
+              >
+                重试加载
+              </Button>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '100px 0',
+              background: '#fff',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+            }}>
+              <Title level={4} style={{ 
+                color: '#bfbfbf',
+                marginBottom: '8px'
+              }}>
+                {searchText ? '未找到相关商品' : '暂无商品'}
+              </Title>
+              <Paragraph type="secondary">
+                {searchText ? '请尝试其他搜索词' : '当前没有可兑换的商品'}
+              </Paragraph>
+            </div>
+          ) : (
+            <Row gutter={[24, 24]}>
+              {filteredProducts.map(product => (
+                <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
+                  <Card
+                    hoverable
+                    onClick={() => goToDetail(product.id)}
+                    style={{ 
+                      height: '100%',
+                      borderRadius: '12px',
+                      border: 'none',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      background: '#fff',
+                      '&:hover': {
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        transform: 'translateY(-2px)'
+                      }
+                    }}
+                    bodyStyle={{ 
+                      padding: '20px',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                  >
+                    {/* 商品名称和描述区域 */}
+                    <div style={{ flex: 1 }}>
+                      {/* 商品名称 */}
+                      <Title level={4} style={{ 
+                        marginBottom: '12px',
+                        fontSize: '1.25rem',
+                        color: '#333',
+                        lineHeight: 1.4
                       }}>
-                        {product.points}
-                      </div>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        积分
-                      </Text>
+                        {product.name}
+                      </Title>
+
+                      {/* 商品描述 */}
+                      {/* <Paragraph type="secondary" style={{ 
+                        fontSize: '0.875rem', 
+                        marginBottom: '12px',
+                        color: '#666',
+                        lineHeight: 1.5,
+                        minHeight: '60px',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {product.description}
+                      </Paragraph> */}
+
+                      {/* 商品标签（如果有的话） */}
+                      {/* {product.tags && product.tags.length > 0 && (
+                        <div style={{ marginTop: '8px' }}>
+                          {product.tags.slice(0, 2).map((tag, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                display: 'inline-block',
+                                background: '#f0f0f0',
+                                color: '#666',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                marginRight: '4px',
+                                marginBottom: '4px'
+                              }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )} */}
                     </div>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        )}
-      </div>
-    </div>
+
+                    {/* 积分信息 */}
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: '16px',
+                      paddingTop: '12px',
+                      borderTop: '1px solid #f0f0f0'
+                    }}>
+                      <Text style={{ fontSize: '0.875rem', color: '#999' }}>
+                        需要积分
+                      </Text>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ 
+                          fontSize: '1.5rem', 
+                          fontWeight: 600,
+                          background: 'linear-gradient(135deg, #00b37e, #ffd149)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          lineHeight: 1
+                        }}>
+                          {product.points}
+                        </div>
+                        <Text type="secondary" style={{ fontSize: '0.75rem' }}>
+                          积分
+                        </Text>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+        </div>
+      </Content>
+    </Layout>
   )
 }

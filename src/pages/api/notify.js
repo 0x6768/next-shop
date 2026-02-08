@@ -133,7 +133,7 @@ SELECT
 FROM old_data d, updated u
 WHERE d.card_key IS NOT NULL
 `, [productId])
-  
+  const site_name = process.env.NEXT_PUBLIC_SITE_NAME;
     // 5. 检查处理结果
     if (result.rows.length === 0) {
      
@@ -146,7 +146,7 @@ WHERE d.card_key IS NOT NULL
     transporter.sendMail({
         from: process.env.SMTP_USER,
         to: email,
-        subject: `Szyang's Shop: 您于 ${new Date().toLocaleString('zh-CN')} 完成了一笔交易`,
+        subject: `${site_name}: 您于 ${new Date().toLocaleString('zh-CN')} 完成了一笔交易`,
         html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1890ff;">交易失败通知</h2>

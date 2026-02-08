@@ -2,6 +2,11 @@
 import { query } from '@/lib/db'
 
 export default async function handler(req, res) {
+  // 获取环境变量ADMIN_PASSWORD
+  const admin_pass = process.env.ADMIN_PASSWORD
+  if (req.query.password !== admin_pass) {
+    return res.status(401).json({ success: false, error: 'Password Error' })
+  }
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: '只允许GET请求' })
   }

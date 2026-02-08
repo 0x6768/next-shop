@@ -1,9 +1,13 @@
 import React from 'react';
 import { createCache, extractStyle, StyleProvider } from '@ant-design/cssinjs';
 import Document, { Head, Html, Main, NextScript } from 'next/document';
-
+// 获取环境变量
+const site_name = process.env.NEXT_PUBLIC_SITE_NAME;
 const MyDocument = () => (
-  <Html lang="en">
+  <Html lang="zh">
+       <title>{site_name}</title>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
     <Head />
     <body>
       <Main />

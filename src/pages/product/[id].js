@@ -1,25 +1,25 @@
 // pages/product/[id].js
 import React, { useState, useEffect } from 'react'
 import { 
-  Card, 
+  Layout,
   Button, 
   Typography, 
   Form, 
   Input, 
   InputNumber,
   message,
-  Tag,
-  Space,
   Spin,
   Modal,
   Alert,
-  Badge
+  Space,
+  Card,
+  Divider
 } from 'antd'
-import { Icon } from '@iconify/react'
 import { useRouter } from 'next/router'
-
+const site_name = process.env.NEXT_PUBLIC_SITE_NAME;
+const { Header, Content } = Layout
 const { Title, Text, Paragraph } = Typography
-const { confirm } = Modal
+const { TextArea } = Input
 
 export default function ProductDetailPage() {
   const router = useRouter()
@@ -47,7 +47,6 @@ export default function ProductDetailPage() {
       const data = await response.json()
       setProduct(data)
       
-      // 如果库存为0，重置表单数量
       if (data.stock === 0) {
         form.setFieldsValue({ quantity: 0 })
       }
@@ -58,9 +57,7 @@ export default function ProductDetailPage() {
     }
   }
 
-  // 显示确认弹窗
   const showConfirm = (values) => {
-    // 检查库存
     if (product.stock === 0) {
       message.error('商品已售罄，无法兑换')
       return
@@ -82,7 +79,6 @@ export default function ProductDetailPage() {
     }
   }
 
-  // 确认兑换
   const handleConfirmExchange = async () => {
     setConfirmLoading(true)
     try {
@@ -100,7 +96,6 @@ export default function ProductDetailPage() {
       
       if (response.status === 400 && result.error?.includes('库存')) {
         message.error(result.error)
-        // 重新获取商品信息，更新库存
         fetchProduct()
         setConfirmLoading(false)
         setShowConfirmModal(false)
@@ -116,7 +111,6 @@ export default function ProductDetailPage() {
         form.resetFields()
         setShowConfirmModal(false)
         
-        // 延迟跳转，让用户看到成功消息
         setTimeout(() => {
           router.push(`${result.pay_url}`)
         }, 1500)
@@ -128,53 +122,9 @@ export default function ProductDetailPage() {
     }
   }
 
-  // 取消兑换
   const handleCancelExchange = () => {
     setFormValues(null)
     setShowConfirmModal(false)
-  }
-
-  // 渲染库存状态标签
-  const renderStockStatus = (stock) => {
-    if (stock === 0) {
-      return (
-        <Badge 
-          status="error" 
-          text="已售罄" 
-          style={{ 
-            color: '#ff4d4f',
-            fontSize: 14,
-            fontWeight: 500
-          }} 
-        />
-      )
-    }
-    
-    if (stock < 3) {
-      return (
-        <Badge 
-          status="warning" 
-          text={`仅剩 ${stock} 件`} 
-          style={{ 
-            color: '#faad14',
-            fontSize: 14,
-            fontWeight: 500
-          }} 
-        />
-      )
-    }
-    
-    return (
-      <Badge 
-        status="success" 
-        text={`库存 ${stock} 件`} 
-        style={{ 
-          color: '#52c41a',
-          fontSize: 14,
-          fontWeight: 500
-        }} 
-      />
-    )
   }
 
   if (productLoading) {
@@ -183,9 +133,17 @@ export default function ProductDetailPage() {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        minHeight: '100vh'
+        minHeight: '100vh',
+        background: '#fff'
       }}>
         <Spin size="large" />
+        <Text style={{ 
+          marginLeft: 12,
+          color: '#666',
+          fontSize: '1rem'
+        }}>
+          加载中...
+        </Text>
       </div>
     )
   }
@@ -193,20 +151,32 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div style={{ 
-        padding: 100, 
-        textAlign: 'center',
         minHeight: '100vh',
-        background: '#fafafa'
+        background: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24
       }}>
-        <Icon 
-          icon="mdi:alert-circle" 
-          style={{ fontSize: 64, color: '#ff4d4f', marginBottom: 20 }} 
-        />
-        <Title level={3}>商品不存在</Title>
+        <Title level={3} style={{ marginBottom: 20, color: '#333' }}>
+          商品不存在
+        </Title>
+        <Paragraph type="secondary" style={{ marginBottom: 24 }}>
+          抱歉，您访问的商品可能已被下架或不存在
+        </Paragraph>
         <Button 
-          type="primary" 
+          type="primary"
+          shape="round"
+          size="large"
           onClick={() => router.push('/shop')}
-          style={{ marginTop: 20 }}
+          style={{
+            background: '#ffc107',
+            color: '#333',
+            border: 'none',
+            fontWeight: 500,
+            boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)'
+          }}
         >
           返回商城
         </Button>
@@ -215,117 +185,218 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <>
-      <div style={{ 
-        minHeight: '100vh', 
-        background: '#fafafa',
-        padding: 24
+    <Layout style={{ 
+      minHeight: '100vh', 
+      background: '#fff',
+    }}>
+      {/* 导航栏 */}
+      <Header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 40px',
+        background: '#fff',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        zIndex: 1,
       }}>
-        <div style={{ 
-          maxWidth: 800, 
+        <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
+          <Text strong onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+            {site_name}
+          </Text>
+        </div>
+        <Space>
+          <Button
+            type="text"
+            style={{ color: '#333' }}
+            onClick={() => router.push('/shop')}
+          >
+            返回商城
+          </Button>
+        </Space>
+      </Header>
+
+      <Content style={{ padding: '40px 0' }}>
+        <div style={{
+          maxWidth: '800px',
           margin: '0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24
+          padding: '0 40px'
         }}>
           {/* 返回按钮 */}
           <Button 
             type="link" 
             onClick={() => router.back()}
-            style={{ alignSelf: 'flex-start', padding: 0 }}
+            style={{ 
+              padding: 0,
+              marginBottom: 24,
+              fontSize: '1rem',
+              color: '#666'
+            }}
           >
-            ← 返回
+            ← 返回上一页
           </Button>
 
-          {/* 商品卡片 */}
-          <Card style={{ borderRadius: 8 }}>
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-              {/* 商品图标 */}
-              <div style={{ 
-                width: 80,
-                height: 80,
-                borderRadius: 12,
-                background: product.color + '15',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: product.color,
-                fontSize: 32
+          {/* 商品基本信息卡片 */}
+          <Card
+            style={{ 
+              borderRadius: 12,
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              marginBottom: 24
+            }}
+            bodyStyle={{ padding: 32 }}
+          >
+            {/* 商品标题区域 */}
+            <div style={{ marginBottom: 32 }}>
+              <Title level={1} style={{
+                fontSize: '2.5rem',
+                marginBottom: '1rem',
+                color: '#333',
+                fontWeight: 600
               }}>
-                <Icon icon={product.icon} width={40} height={40} />
+                {product.name}
+              </Title>
+              
+              <Paragraph style={{
+                fontSize: '1.2rem',
+                color: '#666',
+                marginBottom: '1.5rem',
+                lineHeight: 1.6
+              }}>
+                {product.description}
+              </Paragraph>
+
+              {/* 商品类型标签 */}
+              <div style={{ 
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 16px',
+                background: '#f5f5f5',
+                borderRadius: 20,
+                marginBottom: 16
+              }}>
+               
               </div>
+            </div>
 
-              {/* 商品信息 */}
-              <div style={{ flex: 1 }}>
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: 12
+            {/* 价格和库存信息 */}
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              padding: '24px',
+              background: '#fafafa',
+              borderRadius: 12,
+              marginBottom: 24
+            }}>
+              <div>
+                <Text style={{ 
+                  display: 'block',
+                  fontSize: '1rem',
+                  color: '#666',
+                  marginBottom: 8
                 }}>
-                  <div>
-                    <Title level={3} style={{ marginBottom: 8 }}>
-                      {product.name}
-                    </Title>
-                    {/* <Paragraph type="secondary" style={{ marginBottom: 16 }}>
-                      {product.description}
-                    </Paragraph> */}
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ 
-                      fontSize: 32, 
-                      fontWeight: 600,
-                      color: '#ff4d4f',
-                      lineHeight: 1
-                    }}>
-                      {product.points}
-                    </div>
-                    <Text type="secondary">积分</Text>
-                  </div>
+                  兑换积分
+                </Text>
+                <div style={{ 
+                  fontSize: '3rem', 
+                  fontWeight: 700,
+                  color: '#ff6b35',
+                  lineHeight: 1
+                }}>
+                  {product.points}
+                  <Text style={{ 
+                    fontSize: '1.5rem',
+                    fontWeight: 500,
+                    color: '#999',
+                    marginLeft: 4
+                  }}>
+                    积分
+                  </Text>
                 </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <Tag color={product.color}>
-                    {product.type === 'virtual' ? '虚拟商品' : '服务'}
-                  </Tag>
-                  {renderStockStatus(product.stock)}
+              </div>
+              
+              <div style={{ textAlign: 'right' }}>
+                <Text style={{ 
+                  display: 'block',
+                  fontSize: '1rem',
+                  color: '#666',
+                  marginBottom: 8
+                }}>
+                  当前库存
+                </Text>
+                <div style={{ 
+                  fontSize: '2rem', 
+                  fontWeight: 600,
+                  color: product.stock === 0 ? '#ff4d4f' : 
+                         product.stock < 3 ? '#fa8c16' : '#52c41a',
+                  lineHeight: 1
+                }}>
+                  {product.stock}
+                  <Text style={{ 
+                    fontSize: '1.2rem',
+                    fontWeight: 500,
+                    color: product.stock === 0 ? '#ff4d4f' : 
+                           product.stock < 3 ? '#fa8c16' : '#52c41a',
+                    marginLeft: 4
+                  }}>
+                    件
+                  </Text>
                 </div>
               </div>
             </div>
+
+            {/* 库存警告 */}
+            {product.stock === 0 && (
+              <Alert
+                message="已售罄"
+                description="该商品暂时缺货，请关注后续补货通知。"
+                type="error"
+                showIcon
+                closable
+                style={{ 
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#fff2f0',
+                  marginBottom: 24
+                }}
+              />
+            )}
+            {product.stock < 3 && product.stock > 0 && (
+              <Alert
+                message="库存紧张"
+                description={`该商品库存仅剩 ${product.stock} 件，欲购从速！`}
+                type="warning"
+                showIcon
+                closable
+                style={{ 
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#fffbe6',
+                  marginBottom: 24
+                }}
+              />
+            )}
           </Card>
 
-          {/* 库存警告提示 */}
-          {product.stock < 3 && product.stock > 0 && (
-            <Alert
-              message="库存紧张"
-              description={`该商品库存仅剩 ${product.stock} 件，欲购从速！`}
-              type="warning"
-              showIcon
-              closable
-            />
-          )}
-
-          {product.stock === 0 && (
-            <Alert
-              message="已售罄"
-              description="该商品暂时缺货，请关注后续补货通知。"
-              type="error"
-              showIcon
-              closable
-            />
-          )}
-
-          {/* 商品详情 */}
-          {product.detail && (
-            <Card title="商品详情" style={{ borderRadius: 8 }}>
-              <Paragraph style={{ whiteSpace: 'pre-line' }}>
-                {product.detail}
-              </Paragraph>
-            </Card>
-          )}
-
-          {/* 兑换表单 */}
-          <Card title="兑换" style={{ borderRadius: 8 }}>
+          {/* 兑换表单卡片 */}
+          <Card
+            style={{ 
+              borderRadius: 12,
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              marginBottom: 32
+            }}
+            bodyStyle={{ padding: 32 }}
+          >
+            <Title level={4} style={{ 
+              marginBottom: 24,
+              color: '#333',
+              fontSize: '1.5rem',
+              fontWeight: 600
+            }}>
+              兑换商品
+            </Title>
+            
             <Form
               form={form}
               layout="vertical"
@@ -339,21 +410,25 @@ export default function ProductDetailPage() {
                   { required: true, message: '请输入接收邮箱' },
                   { type: 'email', message: '请输入有效的邮箱地址' }
                 ]}
-                help="兑换成功的卡密将发送到此邮箱"
+                extra="兑换成功后，商品卡密将发送到此邮箱"
               >
                 <Input 
-                  placeholder="输入您的邮箱地址" 
+                  placeholder="请输入您的邮箱地址" 
                   size="large"
                   type="email"
                   maxLength={50}
-                  suffix={<Icon icon="mdi:email-outline" />}
                   disabled={product.stock === 0}
+                  style={{ 
+                    borderRadius: 8,
+                    height: 48,
+                    fontSize: '1rem'
+                  }}
                 />
               </Form.Item>
 
               <Form.Item
                 name="quantity"
-                label="数量"
+                label="兑换数量"
                 initialValue={1}
                 rules={[
                   { required: true, message: '请选择数量' },
@@ -364,7 +439,7 @@ export default function ProductDetailPage() {
                     message: `数量必须在1-${product.stock}之间` 
                   }
                 ]}
-                extra={product.stock > 0 ? `最多可购买 ${product.stock} 件` : '商品已售罄'}
+                extra={`最多可兑换 ${product.stock} 件`}
               >
                 <InputNumber
                   min={1}
@@ -375,34 +450,79 @@ export default function ProductDetailPage() {
                 />
               </Form.Item>
 
-              <Form.Item>
-                <Space>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    size="large"
-                    loading={loading}
-                    style={{ padding: '0 40px' }}
-                    disabled={product.stock === 0}
-                  >
-                    {product.stock === 0 ? '已售罄' : '确认兑换'}
-                  </Button>
-                  <Button
-                    size="large"
-                    onClick={() => router.push('/shop')}
-                  >
-                    返回商城
-                  </Button>
-                </Space>
+              {/* 总计信息 */}
+              <div style={{ 
+                padding: 20,
+                background: '#fafafa',
+                borderRadius: 8,
+                marginBottom: 24,
+                border: '1px solid #f0f0f0'
+              }}>
+                <div style={{ 
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '1.1rem'
+                }}>
+                  <Text style={{ color: '#666' }}>总计需要积分：</Text>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ 
+                      fontSize: '2rem', 
+                      fontWeight: 700,
+                      color: '#ff6b35',
+                      lineHeight: 1
+                    }}>
+                      {product.points}
+                      <Text style={{ 
+                        fontSize: '1.2rem',
+                        fontWeight: 500,
+                        color: '#999',
+                        marginLeft: 4
+                      }}>
+                        积分
+                      </Text>
+                    </div>
+                    <Text style={{ fontSize: '0.875rem', color: '#999' }}>
+                      （单价 {product.points} 积分 × 1 件）
+                    </Text>
+                  </div>
+                </div>
+              </div>
+
+              <Form.Item style={{ marginBottom: 0 }}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  loading={loading}
+                  disabled={product.stock === 0}
+                  block
+                  style={{
+                    height: 56,
+                    background: '#ffc107',
+                    color: '#333',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: '1.1rem',
+                    borderRadius: 8,
+                    boxShadow: '0 2px 8px rgba(255, 193, 7, 0.3)',
+                    marginBottom: 12
+                  }}
+                >
+                  {product.stock === 0 ? '已售罄' : '确认兑换'}
+                </Button>
               </Form.Item>
             </Form>
           </Card>
+
+          {/* 商品详情 */}
+          
         </div>
-      </div>
+      </Content>
 
       {/* 确认兑换弹窗 */}
       <Modal
-        title="请确认兑换信息"
+        title="确认兑换"
         open={showConfirmModal}
         onOk={handleConfirmExchange}
         onCancel={handleCancelExchange}
@@ -411,80 +531,117 @@ export default function ProductDetailPage() {
         cancelText="取消"
         width={480}
         okButtonProps={{
-          danger: true,
+          style: {
+            background: '#ffc107',
+            borderColor: '#ffc107',
+            color: '#333',
+            fontWeight: 600,
+            height: 40
+          }
         }}
         cancelButtonProps={{
-          disabled: confirmLoading
+          disabled: confirmLoading,
+          style: { height: 40 }
         }}
       >
-        <div style={{ lineHeight: '1.8' }}>
+        <div style={{ lineHeight: 1.8, fontSize: '1rem' }}>
           {/* 库存警告 */}
-          {product.stock < 3 && (
+          {product.stock < 3 && product.stock > 0 && (
             <Alert
               message={product.stock === 1 ? '⚠️ 最后1件！' : '库存紧张'}
               description={`该商品库存仅剩 ${product.stock} 件`}
               type="warning"
               showIcon
-              style={{ marginBottom: 16 }}
+              style={{ 
+                marginBottom: 20,
+                borderRadius: 8
+              }}
             />
           )}
           
-          <p>
-            <Text strong>商品：</Text>
-            <Text>{product.name}</Text>
-          </p>
-          <p>
-            <Text strong>单价：</Text>
-            <Text>{product.points} 积分</Text>
-          </p>
-          <p>
-            <Text strong>数量：</Text>
-            <Text>{formValues?.quantity}</Text>
-          </p>
-          <p>
-            <Text strong>总计：</Text>
-            <Text style={{ color: '#ff4d4f', fontWeight: 600 }}>
-              {product.points * (formValues?.quantity || 1)} 积分
-            </Text>
-          </p>
-          <p>
-            <Text strong>接收邮箱：</Text>
-            <Text>{formValues?.email}</Text>
-          </p>
-          
-          {/* 剩余库存信息 */}
-          {product.stock > 0 && (
+          <div style={{ 
+            padding: 20,
+            background: '#fafafa',
+            borderRadius: 8,
+            marginBottom: 20
+          }}>
             <div style={{ 
-              marginTop: 12, 
-              padding: '8px 12px', 
-              background: '#f6ffed', 
-              borderRadius: 4,
-              border: '1px solid #b7eb8f'
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: '12px 8px',
+              alignItems: 'center'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Icon icon="mdi:package-variant" style={{ color: '#52c41a' }} />
-                <Text type="secondary">
-                  兑换后库存将剩余: 
-                  <Text strong style={{ marginLeft: 4, color: '#52c41a' }}>
-                    {product.stock - (formValues?.quantity || 1)} 件
-                  </Text>
-                </Text>
+              <Text style={{ color: '#666' }}>商品名称：</Text>
+              <Text strong>{product.name}</Text>
+              
+              <Text style={{ color: '#666' }}>商品单价：</Text>
+              <Text strong>{product.points} 积分</Text>
+              
+              <Text style={{ color: '#666' }}>兑换数量：</Text>
+              <Text strong>{formValues?.quantity || 1} 件</Text>
+              
+              <Text style={{ color: '#666' }}>接收邮箱：</Text>
+              <Text strong>{formValues?.email}</Text>
+            </div>
+            
+            <Divider style={{ margin: '16px 0' }} />
+            
+            <div style={{ 
+              padding: 16,
+              background: '#fff',
+              borderRadius: 6,
+              border: '1px solid #f0f0f0'
+            }}>
+              <div style={{ 
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: '1.1rem'
+              }}>
+                <Text style={{ color: '#666' }}>总计需要：</Text>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ 
+                    fontSize: '1.8rem', 
+                    fontWeight: 700,
+                    color: '#ff6b35',
+                    lineHeight: 1
+                  }}>
+                    {product.points * (formValues?.quantity || 1)}
+                    <Text style={{ 
+                      fontSize: '1.2rem',
+                      fontWeight: 500,
+                      color: '#999',
+                      marginLeft: 4
+                    }}>
+                      积分
+                    </Text>
+                  </div>
+                  {product.stock > 0 && (
+                    <Text style={{ 
+                      fontSize: '0.875rem', 
+                      color: '#52c41a',
+                      marginTop: 4
+                    }}>
+                      兑换后库存：{product.stock - (formValues?.quantity || 1)} 件
+                    </Text>
+                  )}
+                </div>
               </div>
             </div>
-          )}
+          </div>
           
           <div style={{ 
-            marginTop: 20, 
-            padding: '10px', 
-            background: '#f5f5f5', 
-            borderRadius: 4 
+            padding: 12, 
+            background: '#fff7e6', 
+            borderRadius: 8,
+            border: '1px solid #ffd591'
           }}>
-            <Text type="secondary">
+            <Text style={{ color: '#666', fontSize: '0.875rem' }}>
               兑换成功后，积分将立即扣除，商品卡密将发送至上述邮箱，请确保信息无误。
             </Text>
           </div>
         </div>
       </Modal>
-    </>
+    </Layout>
   )
 }
