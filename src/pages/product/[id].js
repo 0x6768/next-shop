@@ -1,5 +1,5 @@
-// pages/product/[id].js
-import React, { useState, useEffect } from 'react'
+'use client';
+import React, { useState, useEffect } from 'react';
 import { 
   Layout,
   Button, 
@@ -14,53 +14,60 @@ import {
   Space,
   Card,
   Divider
-} from 'antd'
-import { useRouter } from 'next/router'
+} from 'antd';
+import { useRouter } from 'next/router';
+
 const site_name = process.env.NEXT_PUBLIC_SITE_NAME;
-const { Header, Content } = Layout
-const { Title, Text, Paragraph } = Typography
-const { TextArea } = Input
+const { Header, Content } = Layout;
+const { Title, Text, Paragraph } = Typography;
+const { TextArea } = Input;
 
 export default function ProductDetailPage() {
-  const router = useRouter()
-  const { id } = router.query
-  const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
-  const [product, setProduct] = useState(null)
-  const [productLoading, setProductLoading] = useState(true)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [confirmLoading, setConfirmLoading] = useState(false)
-  const [formValues, setFormValues] = useState(null)
+  const router = useRouter();
+  const { id } = router.query;
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [product, setProduct] = useState(null);
+  const [productLoading, setProductLoading] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [formValues, setFormValues] = useState(null);
+
+  // 检查是否有Giscus配置
+  const hasGiscusConfig = process.env.NEXT_PUBLIC_GISCUS_REPO && 
+                         process.env.NEXT_PUBLIC_GISCUS_REPO_ID &&
+                         process.env.NEXT_PUBLIC_GISCUS_CATEGORY &&
+                         process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID;
 
   // 获取商品详情
   useEffect(() => {
     if (id) {
-      fetchProduct()
+      fetchProduct();
     }
-  }, [id])
+  }, [id]);
 
   const fetchProduct = async () => {
-    setProductLoading(true)
+    setProductLoading(true);
     try {
-      const response = await fetch(`/api/products/details?id=${id}`)
-      if (!response.ok) throw new Error('商品不存在')
-      const data = await response.json()
-      setProduct(data)
+      const response = await fetch(`/api/products/details?id=${id}`);
+      if (!response.ok) throw new Error('商品不存在');
+      const data = await response.json();
+      setProduct(data);
       
       if (data.stock === 0) {
-        form.setFieldsValue({ quantity: 0 })
+        form.setFieldsValue({ quantity: 0 });
       }
     } catch (err) {
-      message.error(err.message)
+      message.error(err.message);
     } finally {
-      setProductLoading(false)
+      setProductLoading(false);
     }
-  }
+  };
 
   const showConfirm = (values) => {
     if (product.stock === 0) {
-      message.error('商品已售罄，无法兑换')
-      return
+      message.error('商品已售罄，无法兑换');
+      return;
     }
     
     if (product.stock < 3 && product.stock > 0) {
@@ -69,18 +76,18 @@ export default function ProductDetailPage() {
         content: `该商品库存仅剩 ${product.stock} 件，请尽快兑换！`,
         okText: '知道了，继续兑换',
         onOk: () => {
-          setFormValues(values)
-          setShowConfirmModal(true)
+          setFormValues(values);
+          setShowConfirmModal(true);
         }
-      })
+      });
     } else {
-      setFormValues(values)
-      setShowConfirmModal(true)
+      setFormValues(values);
+      setShowConfirmModal(true);
     }
-  }
+  };
 
   const handleConfirmExchange = async () => {
-    setConfirmLoading(true)
+    setConfirmLoading(true);
     try {
       const response = await fetch('/api/exchange', {
         method: 'POST',
@@ -90,42 +97,42 @@ export default function ProductDetailPage() {
           email: formValues.email,
           quantity: formValues.quantity || 1
         })
-      })
+      });
       
-      const result = await response.json()
+      const result = await response.json();
       
       if (response.status === 400 && result.error?.includes('库存')) {
-        message.error(result.error)
-        fetchProduct()
-        setConfirmLoading(false)
-        setShowConfirmModal(false)
-        return
+        message.error(result.error);
+        fetchProduct();
+        setConfirmLoading(false);
+        setShowConfirmModal(false);
+        return;
       }
       
       if (!response.ok) {
-        throw new Error(result.error || '兑换失败')
+        throw new Error(result.error || '兑换失败');
       }
       
       if (response.ok) {
-        message.info('请稍后...')
-        form.resetFields()
-        setShowConfirmModal(false)
+        message.info('请稍后...');
+        form.resetFields();
+        setShowConfirmModal(false);
         
         setTimeout(() => {
-          router.push(`${result.pay_url}`)
-        }, 1500)
+          router.push(`${result.pay_url}`);
+        }, 1500);
       }
     } catch (error) {
-      console.error('兑换错误:', error)
-      message.error(error.message || '兑换失败，请重试')
-      setConfirmLoading(false)
+      console.error('兑换错误:', error);
+      message.error(error.message || '兑换失败，请重试');
+      setConfirmLoading(false);
     }
-  }
+  };
 
   const handleCancelExchange = () => {
-    setFormValues(null)
-    setShowConfirmModal(false)
-  }
+    setFormValues(null);
+    setShowConfirmModal(false);
+  };
 
   if (productLoading) {
     return (
@@ -145,7 +152,7 @@ export default function ProductDetailPage() {
           加载中...
         </Text>
       </div>
-    )
+    );
   }
 
   if (!product) {
@@ -181,7 +188,7 @@ export default function ProductDetailPage() {
           返回商城
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -515,8 +522,64 @@ export default function ProductDetailPage() {
             </Form>
           </Card>
 
-          {/* 商品详情 */}
-          
+          {/* 评论区域 - 只在有Giscus配置时才显示 */}
+          {hasGiscusConfig && (
+            <Card
+              style={{ 
+                borderRadius: 12,
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                marginBottom: 32
+              }}
+              bodyStyle={{ padding: 0 }}
+            >
+              <div style={{ 
+                padding: 20, 
+                borderBottom: '1px solid #f0f0f0',
+                background: '#fafafa',
+                borderTopLeftRadius: 12,
+                borderTopRightRadius: 12
+              }}>
+                <Title level={4} style={{ 
+                  margin: 0,
+                  color: '#333',
+                  fontSize: '1.2rem',
+                  fontWeight: 600
+                }}>
+                  商品讨论
+                </Title>
+                <Text type="secondary" style={{ fontSize: '0.9rem' }}>
+                  欢迎分享使用体验、询问相关问题
+                </Text>
+              </div>
+              
+              {/* Giscus 评论组件 */}
+              <div 
+                ref={(ref) => {
+                  if (ref && !ref.hasAttribute('data-loaded')) {
+                    const script = document.createElement('script');
+                    script.src = 'https://giscus.app/client.js';
+                    script.setAttribute('data-repo', process.env.NEXT_PUBLIC_GISCUS_REPO);
+                    script.setAttribute('data-repo-id', process.env.NEXT_PUBLIC_GISCUS_REPO_ID);
+                    script.setAttribute('data-category', process.env.NEXT_PUBLIC_GISCUS_CATEGORY);
+                    script.setAttribute('data-category-id', process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID);
+                    script.setAttribute('data-mapping', 'pathname');
+                    script.setAttribute('data-strict', '0');
+                    script.setAttribute('data-reactions-enabled', '1');
+                    script.setAttribute('data-emit-metadata', '0');
+                    script.setAttribute('data-input-position', 'bottom');
+                    script.setAttribute('data-theme', 'light');
+                    script.setAttribute('data-lang', 'zh-CN');
+                    script.setAttribute('crossorigin', 'anonymous');
+                    script.async = true;
+                    script.setAttribute('data-loaded', 'true');
+                    ref.appendChild(script);
+                  }
+                }}
+                style={{ padding: 20, minHeight: '200px' }}
+              />
+            </Card>
+          )}
         </div>
       </Content>
 
@@ -643,5 +706,5 @@ export default function ProductDetailPage() {
         </div>
       </Modal>
     </Layout>
-  )
+  );
 }
