@@ -23,11 +23,7 @@ async function testConnection() {
     client.release()
     return true
   } catch (error) {
-    console.error('❌ 数据库连接失败:', error.message)
-    console.log('请检查:')
-    console.log('1. DATABASE_URL 是否正确')
-    console.log('2. 数据库是否正在运行')
-    console.log('3. 网络连接是否正常')
+  
     return false
   }
 }

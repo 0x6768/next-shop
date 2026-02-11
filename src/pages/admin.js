@@ -97,7 +97,7 @@ export default function AdminPage() {
 
     setLoading(true)
     try {
-      const result = await apiRequest('/api/admin', {
+      const result = await apiRequest('/api/admin/crud', {
         password,
         action: 'tables'
       })
@@ -135,7 +135,7 @@ export default function AdminPage() {
         }
       }
       
-      const result = await apiRequest('/api/admin', {
+      const result = await apiRequest('/api/admin/crud', {
         password: currentPassword,
         action: 'select',
         table: currentTable,
@@ -172,7 +172,7 @@ export default function AdminPage() {
           .filter(k => k)
       }
       
-      const result = await apiRequest('/api/admin', {
+      const result = await apiRequest('/api/admin/crud', {
         password: currentPassword,
         action: 'update',
         table: currentTable,
@@ -214,7 +214,7 @@ export default function AdminPage() {
           .filter(k => k)
       }
       
-      const result = await apiRequest('/api/admin', {
+      const result = await apiRequest('/api/admin/crud', {
         password: currentPassword,
         action: 'insert',
         table: currentTable,
@@ -242,7 +242,7 @@ export default function AdminPage() {
       cancelText: '取消',
       onOk: async () => {
         try {
-          await apiRequest('/api/admin', {
+          await apiRequest('/api/admin/crud', {
             password: currentPassword,
             action: 'delete',
             table: currentTable,

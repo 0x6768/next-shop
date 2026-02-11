@@ -293,7 +293,7 @@ export default function ShopPage() {
                         <div style={{ 
                           fontSize: '1.5rem', 
                           fontWeight: 600,
-                          background: 'linear-gradient(135deg, #00b37e, #ffd149)',
+                          background: '#1f1f1f',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           lineHeight: 1
